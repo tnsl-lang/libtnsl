@@ -1,0 +1,50 @@
+
+# Path type
+struct Path {
+	box.List strings
+}
+
+uint8 PATH_SEP = '/'
+~uint8 PARENT_DIR = "..\0"
+~uint8 CURRENT_DIR = ".\0"
+
+/; method Path
+	/; init
+		self.strings.init(8)
+	;/
+
+	/; from_cstr (~uint8 path)
+	;/
+
+	/; to_cstr [~uint8]
+		box.List out
+		out.from_cstr("\0")
+
+		/; if (self.strings.count < 1)
+			return out.as_cstr()
+		;/
+
+		~uint8 str = self.strings.get(0)
+		out.push_cstr(str)
+
+		/; loop (int i = 1; i < self.strings.count) [i++]
+			out.push(~PATH_SEP)
+			out.push_cstr(str)
+		;/
+
+		return out.as_cstr()
+	;/
+
+	/; relative (~uint8 path) [Path]
+		
+	;/
+
+	/; end
+		~~uint8 str
+		/; loop (int i = 0; i < self.strings.count) [i++]
+			str = self.strings.get(i)
+			_delete(str`)
+		;/
+		self.strings.end()
+	;/
+;/

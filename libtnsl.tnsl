@@ -1,0 +1,13 @@
+# Base module for libtnsl
+/; module tnsl
+	# Wrap c calls for now wrt memory management
+	import "internal/c_wrap_linux.tnsl"
+
+	# Basic modules
+	import "algo/algo.tnsl"
+	import "box/box.tnsl"
+	import "io/io.tnsl"
+	import "lang/lang.tnsl"
+	import "text/text.tnsl"
+;/
+

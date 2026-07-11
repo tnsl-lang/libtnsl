@@ -1,0 +1,116 @@
+
+# File type
+struct File {
+	# List containing the path
+	Path path,
+	int32 handle,
+	uint pos,
+	bool at_end
+}
+
+/; method File
+	/; init (~uint8 str)
+		self.path.init()
+		self.path.from_cstr(str)
+		self.handle = 0
+		self.handle--
+		self.at_end = false
+		self.pos = 0
+	;/
+
+	/; relative (~uint8 path) [File]
+		Path rel = self.path.relative(path)
+		~uint8 new_path = rel.to_cstr()
+		File out
+		out.init(new_path)
+		_delete(new_path)
+		rel.end()
+		return out
+	;/
+
+	/; end
+		/; if (self.handle + 1 !== 0)
+			_close_file(self.handle)
+			self.handle = 0
+			self.handle--
+		;/
+		self.path.end()
+	;/
+
+	/; open
+		~uint8 p = self.path.to_cstr()
+		self.handle = _open_file(p)
+
+		/; if (self.handle + 1 == 0)
+			self.at_end = true
+		;/
+		_delete(p)
+	;/
+
+	/; create
+		~uint8 p = self.path.to_cstr()
+		self.handle = _create_file(p)
+		/; if (self.handle + 1 == 0)
+			self.at_end = true
+		;/
+		_delete(p)
+	;/
+
+	/; close
+		/; if (self.handle + 1 !== 0)
+			_close_file(self.handle)
+			self.handle = 0
+			self.handle--
+			self.at_end = false
+		;/
+	;/
+
+	/; read [uint8]
+		/; if (self.at_end == true)
+			return 0
+		;/
+
+		uint8 out
+		int bytes = _read_byte(self.handle, ~out)
+		self.pos = self.pos + 1
+
+		/; if (bytes == 0)
+			self.at_end = true
+			return 0
+		;; else if (bytes !== 1)
+			_perror("Error reading from file\0")
+			_print_num("FD: %ld\n\0", self.handle)
+			self.at_end = true
+			return 0
+		;/
+		
+		return out
+	;/
+
+	/; unread
+		/; if (self.pos < 1)
+			return
+		;/
+
+		self.pos = self.pos - 1
+		_fseek(self.handle, self.pos)
+
+		/; if (self.at_end == true)
+			self.at_end = false
+		;/
+	;/
+
+	/; write (uint8 byte)
+		int written = _write_byte(self.handle, ~byte)
+		/; if (written == 0)
+			self.at_end = true
+		;/
+	;/
+
+	/; write_cstr (~uint8 str)
+		/; loop (self.at_end == false && str` !== 0) [str++]
+			self.write(str`)
+		;/
+	;/
+
+;/

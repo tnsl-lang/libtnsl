@@ -1,0 +1,31 @@
+
+/; cstr_cmp (~uint8 a, b) [bool]
+	/; loop (a` == b` && a` !== 0 && b` !== 0) [a++; b++] ;/
+
+	/; if (b` == 0 && a == 0)
+		return true
+	;/
+
+	return false
+;/
+
+/; cstr_len (~uint8 a) [uint]
+	uint out = 0
+	/; loop (str` !== 0) [str++; out++] ;/
+	return out
+;/
+
+/; cstr_starts_with (~uint8 str, prefix) [bool]
+	int chk = cstr_len(suffix)
+	int counter = 0
+
+	/; loop (str` !== 0) [str++]
+	;/
+
+/; cstr_ends_with (~uint8 str, suffix) [bool]
+	int chk = cstr_len(suffix)
+	int counter = 0
+
+	/; loop (str` !== 0) [str++]
+	;/
+;/
