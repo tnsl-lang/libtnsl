@@ -1,0 +1,193 @@
+
+# This code was naively adapted from siphash.c
+# see https://github.com/veorq/SipHash/blob/master/siphash.c
+# for the original implementation
+
+# SipHash is licenced under CC0, MIT
+# and was created originally by:
+
+# Jean-Philippe Aumasson
+# Daniel J. Bernstein
+
+# This implementation was written by NatCounter for libtnsl
+
+int SIPHASH_CROUNDS = 2
+int SIPHASH_DROUNDS = 4
+
+/; SIPHASH_ROTL (uint64 x, b) [uint64]
+	return (x << b) | (x >> (64 - b))
+;/
+
+/; SIPHASH_U32_TO_8_LE (~uint8 p, uint32 v)
+	p{0} = v
+	p{1} = (v >> 8)
+	p{2} = (v >> 16)
+	p{3} = (v >> 24)
+;/
+
+/; SIPHASH_U64_TO_8_LE (~uint8 p, uint64 v)
+	SIPHASH_U32_TO_8_LE(p, v)
+	SIPHASH_U32_TO_8_LE(p + 4, v >> 32)
+;/
+
+/; SIPHASH_U8_TO_64_LE (~uint8 p) [uint64]
+	uint64 out = p{7}
+	out = (out << 8) | p{6}
+	out = (out << 8) | p{5}
+	out = (out << 8) | p{4}
+	out = (out << 8) | p{3}
+	out = (out << 8) | p{2}
+	out = (out << 8) | p{1}
+	out = (out << 8) | p{0}
+	return out
+;/
+
+/; SIPHASH_TRACE (uint64 v0, v1, v2, v3)
+	_print("TRACE:\n\0")
+	_print_num("  v0: %016lx\n\0", v0)
+	_print_num("  v1: %016lx\n\0", v1)
+	_print_num("  v2: %016lx\n\0", v2)
+	_print_num("  v3: %016lx\n\0", v3)
+;/
+
+/; siphash (~uint8 in, uint64 in_len, ~uint8 k, ~uint8 out, uint64 out_len) [int]
+
+	uint64 v0 = 0x736f6d65
+	v0 = (v0 << 32) | 0x70736575
+	uint64 v1 = 0x646f7261
+	v1 = (v1 << 32) | 0x6e646f6d
+	uint64 v2 = 0x6c796765
+	v2 = (v2 << 32) | 0x6e657261
+	uint64 v3 = 0x74656462
+	v3 = (v3 << 32) | 0x79746573
+	
+	uint64 k0 = SIPHASH_U8_TO_64_LE(k)
+	uint64 k1 = SIPHASH_U8_TO_64_LE(k + 8)
+	
+	uint64 m
+	int i
+	
+	~uint8 end = in + in_len - (in_len % 8)
+	int left = in_len & 7
+	uint64 b = in_len << 56
+
+	v3 = v3 ^ k1
+	v2 = v2 ^ k0
+	v1 = v1 ^ k1
+	v0 = v0 ^ k0
+
+	/; if (out_len == 16)
+		v1 = v1 ^ 0xee
+	;/
+
+	/; loop (in !== end) [in = in + 8]
+		m = SIPHASH_U8_TO_64_LE(in)
+		v3 = v3 ^ m
+
+		SIPHASH_TRACE(v0, v1, v2, v3)
+		/; loop (i = 0; i < SIPHASH_CROUNDS ) [i++]
+			v0 = v0 + v1
+			v1 = SIPHASH_ROTL(v1, 13)
+			v1 = v1 ^ v0
+			v0 = SIPHASH_ROTL(v0, 32)
+			v2 = v2 + v3
+			v3 = SIPHASH_ROTL(v3, 16)
+			v3 = v3 ^ v2
+			v0 = v0 + v3
+			v3 = SIPHASH_ROTL(v3, 21)
+			v3 = v3 ^ v0
+			v2 = v2 + v1
+			v1 = SIPHASH_ROTL(v1, 17)
+			v1 = v1 ^ v2
+			v2 = SIPHASH_ROTL(v2, 32)
+		;/
+
+		v0 = v0 ^ m
+	;/
+
+	/; loop (left--; left !< 0) [left--]
+		uint64 ii = in{left}
+		_print_num("ii: %08x\n\0", ii)
+		b = b | (ii << (left * 8))
+	;/
+
+	_print_num("b: %016lx\n\0", b)
+	v3 = v3 ^ b
+
+	SIPHASH_TRACE(v0, v1, v2, v3)
+	/; loop (i = 0; i < SIPHASH_CROUNDS ) [i++]
+		v0 = v0 + v1
+		v1 = SIPHASH_ROTL(v1, 13)
+		v1 = v1 ^ v0
+		v0 = SIPHASH_ROTL(v0, 32)
+		v2 = v2 + v3
+		v3 = SIPHASH_ROTL(v3, 16)
+		v3 = v3 ^ v2
+		v0 = v0 + v3
+		v3 = SIPHASH_ROTL(v3, 21)
+		v3 = v3 ^ v0
+		v2 = v2 + v1
+		v1 = SIPHASH_ROTL(v1, 17)
+		v1 = v1 ^ v2
+		v2 = SIPHASH_ROTL(v2, 32)
+	;/
+
+	v0 = v0 ^ b
+
+	/; if (out_len == 16)
+		v2 = v2 ^ 0xee
+	;; else
+		v2 = v2 ^ 0xff
+	;/
+
+	SIPHASH_TRACE(v0, v1, v2, v3)
+	/; loop (i = 0; i < SIPHASH_DROUNDS ) [i++]
+		v0 = v0 + v1
+		v1 = SIPHASH_ROTL(v1, 13)
+		v1 = v1 ^ v0
+		v0 = SIPHASH_ROTL(v0, 32)
+		v2 = v2 + v3
+		v3 = SIPHASH_ROTL(v3, 16)
+		v3 = v3 ^ v2
+		v0 = v0 + v3
+		v3 = SIPHASH_ROTL(v3, 21)
+		v3 = v3 ^ v0
+		v2 = v2 + v1
+		v1 = SIPHASH_ROTL(v1, 17)
+		v1 = v1 ^ v2
+		v2 = SIPHASH_ROTL(v2, 32)
+	;/
+
+	b = v0 ^ v1 ^ v2 ^ v3
+	SIPHASH_U64_TO_8_LE(out, b)
+
+	/; if (out_len < 16)
+		return 0
+	;/
+
+	v1 = v1 ^ 0xdd
+
+	SIPHASH_TRACE(v0, v1, v2, v3)
+	/; loop (i = 0; i < SIPHASH_DROUNDS ) [i++]
+		v0 = v0 + v1
+		v1 = SIPHASH_ROTL(v1, 13)
+		v1 = v1 ^ v0
+		v0 = SIPHASH_ROTL(v0, 32)
+		v2 = v2 + v3
+		v3 = SIPHASH_ROTL(v3, 16)
+		v3 = v3 ^ v2
+		v0 = v0 + v3
+		v3 = SIPHASH_ROTL(v3, 21)
+		v3 = v3 ^ v0
+		v2 = v2 + v1
+		v1 = SIPHASH_ROTL(v1, 17)
+		v1 = v1 ^ v2
+		v2 = SIPHASH_ROTL(v2, 32)
+	;/
+
+	b = v0 ^ v1 ^ v2 ^ v3
+	SIPHASH_U64_TO_8_LE(out + 8, b)
+	
+	return 0
+;/
+
