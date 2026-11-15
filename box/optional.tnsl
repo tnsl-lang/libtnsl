@@ -1,0 +1,35 @@
+
+struct Maybe {
+	~void obj
+}
+
+/; method Maybe
+	/; ok [bool]
+		return self.obj !== NULL
+	;/
+;/
+
+struct Error {
+	~void trace,
+	~uint8 msg
+}
+
+/; method Error
+	
+	/; print
+		_print("ERROR: \0")
+		_print(self.msg)
+		_print("\n\0")
+	;/
+;/
+
+struct Result {
+	Maybe obj,
+	Error err
+}
+
+/; method Result
+	/; ok [bool]
+		return self.obj.ok()
+	;/
+;/

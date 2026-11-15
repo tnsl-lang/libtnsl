@@ -1,31 +1,182 @@
 
-/; cstr_cmp (~uint8 a, b) [bool]
+/; module cstr
+
+/; eq (~uint8 a, b) [bool]
 	/; loop (a` == b` && a` !== 0 && b` !== 0) [a++; b++] ;/
 
-	/; if (b` == 0 && a == 0)
+	/; if (b` == 0 && a` == 0)
 		return true
 	;/
 
 	return false
 ;/
 
-/; cstr_len (~uint8 a) [uint]
+/; length (~uint8 str) [uint]
 	uint out = 0
-	/; loop (str` !== 0) [str++; out++] ;/
+	/; loop (str{out} !== 0) [out++] ;/
 	return out
 ;/
 
-/; cstr_starts_with (~uint8 str, prefix) [bool]
-	int chk = cstr_len(suffix)
-	int counter = 0
+/; copy (~uint8 str) [~uint8]
+	~uint8 out = _alloc(length(str))
+	
+	int i = 0
+	/; loop (str{i} !== 0) [out{i} = str{i}; i++] ;/
+	out{i} = 0
 
-	/; loop (str` !== 0) [str++]
+	return out
+;/
+
+/; starts_with (~uint8 str, prefix) [bool]
+	uint l = length(prefix)
+
+	/; loop (int i = 0; i < l) [i++]
+		/; if (i == l - 1)
+			return str{i} == prefix{i}
+		;; else if (str{i} !== prefix{i})
+			i = l
+		;/
 	;/
 
-/; cstr_ends_with (~uint8 str, suffix) [bool]
-	int chk = cstr_len(suffix)
-	int counter = 0
+	return false
+;/
 
+/; ends_with (~uint8 str, suffix) [bool]
+	uint str_l = length(str)
+	uint l = length(suffix)
+
+	/; if (str_l < l)
+		return false
+	;/
+
+	str_l = str_l - l
+
+	/; loop (int i = l; i > 0)
+		i--
+		/; if (str{str_l + i} !== suffix{i})
+			return false
+		;/
+	;/
+
+	return true
+;/
+
+/; contains_char (~uint8 str, uint8 ch) [bool]
 	/; loop (str` !== 0) [str++]
+		/; if (str` == ch)
+			return true
+		;/
+	;/
+	return false
+;/
+
+/; in_csv (~uint8 csv, ~uint8 str) [bool]
+	int along = 0
+
+	/; loop (csv` !== 0) [csv++]
+		/; if (csv` == ',')
+			/; if (along !< 0 && str{along} == 0)
+				return true
+			;/
+			along = 0
+		;; else if (along !< 0 && str{along} == csv`)
+			along++
+		;; else
+			along = -1
+		;/
+	;/
+
+	return along !< 0 && str{along} == 0
+;/
+
+/; _base_for_char (uint8 c) [uint]
+	/; if (c == 'b' || c == 'B')
+		return 2
+	;; else if (c == 'o' || c == 'O')
+		return 8
+	;; else if (c == 'x' || c == 'X')
+		return 16
+	;/
+
+	return 10
+;/
+
+/; _decode_bin (uint8 ch) [int]
+	/; if (ch == '1')
+		return 1
+	;/
+
+	return 0
+;/
+
+/; _decode_oct (uint8 ch) [int]
+	/; if (ch !< '0' && ch !> '7')
+		return ch - '0'
+	;/
+	return 0
+;/
+
+/; _decode_hex (uint8 ch) [int]
+	/; if (ch !< '0' && ch !> '9')
+		return ch - '0'
+	;; else if (ch !< 'a' && ch !> 'f')
+		return ch - 'a' + 10
+	;; else if (ch !< 'A' && ch !> 'F')
+		return ch - 'A' + 10
+	;/
+	return 0
+;/
+
+/; _decode_dec (uint8 ch) [int]
+	/; if (ch !< '0' && ch !> '9')
+		return ch - '0'
+	;/
+	return 0
+;/
+
+/; cstr_to_uint (~uint8 str) [uint]
+	int base = 10
+	int start = 0
+	int l = length(str)
+
+	# Get base
+	/; if (l > start + 2 && str{start} == '0')
+		/; if (str{start + 1} > '9' || str{start + 1} < 0)
+			base = _base_for_char(str{start + 1})
+			start = 2
+		;/
+	;/
+
+	uint out = 0
+	/; loop (start < l) [start++]
+		out = out * base
+		int decoded = 0
+
+		/; if (base == 2)
+			decoded = _decode_bin(str{start})
+		;; else if (base == 8)
+			decoded = _decode_oct(str{start})
+		;; else if (base == 10)
+			decoded = _decode_dec(str{start})
+		;; else if (base == 16)
+			decoded = _decode_hex(str{start})
+		;/
+
+		out = out + decoded
+	;/
+
+	return out
+;/
+
+/; reverse_str(~uint8 str)
+	uint8 tmp
+	int l = length(str)
+	/; loop (int i = 0; i < l / 2) [i++]
+		tmp = str{i}
+		str{i} = str{(l - 1) - i}
+		str{(l - 1) - i} = tmp
 	;/
 ;/
+
+
+;/ # End module

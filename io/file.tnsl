@@ -10,10 +10,8 @@ struct File {
 
 /; method File
 	/; init (~uint8 str)
-		self.path.init()
-		self.path.from_cstr(str)
-		self.handle = 0
-		self.handle--
+		self.path.init(str)
+		self.handle = -1
 		self.at_end = false
 		self.pos = 0
 	;/

@@ -1,5 +1,5 @@
 # Must be included at the top of the file
-asm "extern malloc, realloc, free, printf, putchar, open, close, read, write, lseek, perror"
+asm "extern malloc, realloc, free, printf, putchar, open, close, read, write, lseek, perror, realpath"
 
 ~void NULL = 0
 
@@ -246,6 +246,27 @@ asm "extern malloc, realloc, free, printf, putchar, open, close, read, write, ls
     asm "call write wrt ..plt"
 
     asm "mov r12, rax"
+
+    return out
+;/
+
+/; _realpath (~uint8 path) [~uint8]
+    ~uint8 out
+
+    asm "mov rax, rsp"
+    asm "xor rdx, rdx"
+    asm "mov rcx, 16"
+    asm "div rcx"
+    asm "sub rsp, rdx"
+    asm "sub rsp, 128"
+
+    # Call libc
+    asm "mov rdi, r10" # handle
+    asm "mov rsi, 0"   # resolved_path
+    asm "mov rdx, 1"   # one byte
+    asm "call realpath wrt ..plt"
+
+    asm "mov r11, rax"
 
     return out
 ;/

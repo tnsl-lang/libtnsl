@@ -2,20 +2,21 @@
 
 The official implimentation of the TNSL Standard Library
 
-`libtnsl` is a "batteries included" standard library which aims to keep these batteries as small as possible.
+`libtnsl` is a "batteries included" standard library aimed at desktop or network operating systems which aims to keep each battery as small as possible.
 
 To that end there are a variety of modules, some of which may be omitted for smaller but less capable distributions of the standard library.
 
 ---
 ## Module Groups
 
-Modules are grouped into `base`, `net`, or `full` groupings.  Base is the core modules provided, net adds networking, and full is the complete set including graphics and audio.
+Modules are grouped into `base`, `net`, or `extended` groupings.  Base is the core modules provided, net adds networking, and extended is the complete set including graphics and audio.
 
 ## Available Modules By Group
 
 ### Base Modules
 * `algo`
   * common algorithms which act on types implementing the common library interfaces
+  * non-cryptographic hash functions
 * `box`
   * common container types implementing the common library interfaces
 * `crypto`
@@ -36,7 +37,7 @@ Modules are grouped into `base`, `net`, or `full` groupings.  Base is the core m
   * various protocols
 * `lang`
   * language constants
-  * any language feature support which relies on the std library lives here
+  * any language feature support which relies on the standard library lives here
   * common interfaces used throughout the rest of the library
 * `math`
   * common math functions
@@ -68,9 +69,9 @@ Modules are grouped into `base`, `net`, or `full` groupings.  Base is the core m
   * support for TLS using the base `crypto` module
   * support for HTTP 1/2/3 protocol
   * support for WebSockets
-  * support for a variety of other internet protocols
+  * support for other internet protocols
 
-### Full Modules
+### Extended Modules
 * `audio`
   * support for audio playback through a graph based api with inputs, outputs, and transformers
   * audio transformer and generator protocols
@@ -78,7 +79,7 @@ Modules are grouped into `base`, `net`, or `full` groupings.  Base is the core m
   * support for loading sound formats from files
 * `graphics`
   * basic windowing support
-  * light wrappers over a variety of low level graphics libraries
+  * bindings over a variety of low level graphics libraries
     * OpenGL
     * OpenXR
     * Vulkan

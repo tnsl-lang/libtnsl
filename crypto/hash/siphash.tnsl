@@ -9,10 +9,15 @@
 # Jean-Philippe Aumasson
 # Daniel J. Bernstein
 
-# This implementation was written by NatCounter for libtnsl
+# This implementation was adapted by NatCounter for libtnsl
+# and probably only works on LE systems at the moment
 
 int SIPHASH_CROUNDS = 2
 int SIPHASH_DROUNDS = 4
+
+struct SipHashKey {
+	uint64 k0, k1
+}
 
 /; SIPHASH_ROTL (uint64 x, b) [uint64]
 	return (x << b) | (x >> (64 - b))
@@ -40,14 +45,6 @@ int SIPHASH_DROUNDS = 4
 	out = (out << 8) | p{1}
 	out = (out << 8) | p{0}
 	return out
-;/
-
-/; SIPHASH_TRACE (uint64 v0, v1, v2, v3)
-	_print("TRACE:\n\0")
-	_print_num("  v0: %016lx\n\0", v0)
-	_print_num("  v1: %016lx\n\0", v1)
-	_print_num("  v2: %016lx\n\0", v2)
-	_print_num("  v3: %016lx\n\0", v3)
 ;/
 
 /; siphash (~uint8 in, uint64 in_len, ~uint8 k, ~uint8 out, uint64 out_len) [int]
@@ -84,7 +81,6 @@ int SIPHASH_DROUNDS = 4
 		m = SIPHASH_U8_TO_64_LE(in)
 		v3 = v3 ^ m
 
-		SIPHASH_TRACE(v0, v1, v2, v3)
 		/; loop (i = 0; i < SIPHASH_CROUNDS ) [i++]
 			v0 = v0 + v1
 			v1 = SIPHASH_ROTL(v1, 13)
@@ -107,14 +103,11 @@ int SIPHASH_DROUNDS = 4
 
 	/; loop (left--; left !< 0) [left--]
 		uint64 ii = in{left}
-		_print_num("ii: %08x\n\0", ii)
 		b = b | (ii << (left * 8))
 	;/
 
-	_print_num("b: %016lx\n\0", b)
 	v3 = v3 ^ b
 
-	SIPHASH_TRACE(v0, v1, v2, v3)
 	/; loop (i = 0; i < SIPHASH_CROUNDS ) [i++]
 		v0 = v0 + v1
 		v1 = SIPHASH_ROTL(v1, 13)
@@ -140,7 +133,6 @@ int SIPHASH_DROUNDS = 4
 		v2 = v2 ^ 0xff
 	;/
 
-	SIPHASH_TRACE(v0, v1, v2, v3)
 	/; loop (i = 0; i < SIPHASH_DROUNDS ) [i++]
 		v0 = v0 + v1
 		v1 = SIPHASH_ROTL(v1, 13)
@@ -167,7 +159,6 @@ int SIPHASH_DROUNDS = 4
 
 	v1 = v1 ^ 0xdd
 
-	SIPHASH_TRACE(v0, v1, v2, v3)
 	/; loop (i = 0; i < SIPHASH_DROUNDS ) [i++]
 		v0 = v0 + v1
 		v1 = SIPHASH_ROTL(v1, 13)

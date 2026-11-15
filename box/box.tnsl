@@ -1,5 +1,7 @@
 
 /; module box
 	import "list.tnsl"
+	import "map.tnsl"
+	import "optional.tnsl"
 ;/
 

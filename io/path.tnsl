@@ -1,19 +1,40 @@
 
 # Path type
 struct Path {
-	box.List strings
+	box.List strings,
+	bool is_dir
 }
 
 uint8 PATH_SEP = '/'
-~uint8 PARENT_DIR = "..\0"
-~uint8 CURRENT_DIR = ".\0"
 
 /; method Path
-	/; init
+	/; init (~uint8 path)
 		self.strings.init(8)
-	;/
 
-	/; from_cstr (~uint8 path)
+		~uint8 real = _realpath(path)
+
+		box.List tmp
+		tmp.init(1)
+
+		/; loop (int i = 0; real{i} !== 0) [i++]
+			uint8 cha = real{i}
+			/; if (cha == PATH_SEP)
+				~uint8 str = tmp.as_cstr()
+				self.strings.push(~str)
+				tmp.init(1)
+			;; else
+				tmp.push(~cha)
+			;/
+		;/
+
+		/; if (tmp.count > 0)
+			~uint8 str = tmp.as_cstr()
+			self.strings.push(~str)
+		;; else
+			tmp.end()
+		;/
+
+		_delete(real)
 	;/
 
 	/; to_cstr [~uint8]
@@ -28,6 +49,7 @@ uint8 PATH_SEP = '/'
 		out.push_cstr(str)
 
 		/; loop (int i = 1; i < self.strings.count) [i++]
+			str = self.strings.get(i)
 			out.push(~PATH_SEP)
 			out.push_cstr(str)
 		;/
@@ -36,7 +58,36 @@ uint8 PATH_SEP = '/'
 	;/
 
 	/; relative (~uint8 path) [Path]
+		# Terrible for now but we are always assuming that Path
+		# points to a file, so we just pop the last string off,
+		# grab the cstr representation, and concat alongside a
+		# forward slash (if to_cstr returns something other
+		# than 0)
+
+		# Snip off the last item in our strings array (filename)
+		~uint8 last = self.strings.get(self.strings.count - 1)
+		self.strings.pop()
+
+		# Generate base path from to_cstr
+		box.List rel_pth
+		~uint8 full = self.to_cstr()
+		rel_pth.from_cstr(full)
+		_delete(full)
+
+		# Put the file name back
+		self.strings.push(~last)
 		
+		# Append on the relative path
+		/; if (rel_pth.count > 0)
+			rel_pth.push(~PATH_SEP)
+		;/
+		rel_pth.push_cstr(path)
+		full = rel_pth.as_cstr()
+		
+		# Initialize the output variable
+		Path out
+		out.init(full)
+
 	;/
 
 	/; end

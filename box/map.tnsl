@@ -1,0 +1,185 @@
+
+# Currently just a hash map from cstring to an arbitrary pointer
+# but looking to expand this in the future with generics
+
+struct MapNode {
+	~void
+		key,
+		value,
+	
+	bool active
+}
+
+/; method MapNode
+	/; deleted [bool]
+		return self.active == false && self.key !== null
+	;/
+;/
+
+struct Map {
+	uint
+		count,
+		size,
+
+	~MapNode _under
+}
+
+uint MAP_MIN_SIZE = 8
+uint MAP_MAX_GROW = 4096
+
+/; method Map
+	/; _alloc
+		MapNode tmp
+		tmp.key = null
+		tmp.value = null
+		tmp.active = false
+
+		self._under = _alloc(self.size * len tmp)
+		
+		/; loop (int i = 0; i < self.size) [i++]
+			self._under{i} = tmp
+		;/
+	;/
+
+	/; init
+		self.count = 0
+		self.size = MAP_MIN_SIZE
+
+		self._alloc()
+	;/
+
+	/; _over [bool]
+		uint usage = (self.count * 10) / self.size
+		return usage > 7
+	;/
+
+	/; _grow
+		~MapNode old_list = self._under
+		uint old_size = self.size
+
+		self.count = 0
+		/; if (self.size < MAP_MAX_GROW / 2)
+			self.size = old_size * 2
+		;; else
+			self.size = old_size + MAP_MAX_GROW
+		;/
+		self._alloc()
+		
+		/; loop (int i = 0; i < old_size) [i++]
+			MapNode to_copy = old_list{i}
+			/; if (to_copy.active)
+				uint idx = self._index(to_copy.key)
+				self._under{idx} = to_copy
+			;; else if (to_copy.key !== null)
+				_delete(to_copy.key)
+			;/
+		;/
+
+		_delete(old_list)
+	;/
+
+	/; _hash (~uint8 key, uint64 k0) [uint64]
+		crypto.hash.SipHashKey sk
+		sk.k0 = k0
+		sk.k1 = k0
+
+		uint in_len = text.cstr.length(key)
+
+		uint64 out = 0
+
+		crypto.hash.siphash(key, in_len, ~sk, ~out, 8)
+		return out % self.size
+	;/
+
+	/; _index (~uint8 key) [int]
+		# Default hash
+		uint h = self._hash(key, 0)
+		int first_free = -1
+
+		/; loop (int i = 0; i < self.size) [i++]
+			uint try = h + (i + i * i) / 2
+			try = try % self.size
+
+			MapNode node = self._under{try}
+			
+			/; if (node.key == null)
+				/; if (first_free < 0)
+					return try
+				;/
+				return first_free
+			;; else if (node.deleted() == true && first_free < 0)
+				first_free = try
+			;; else if (node.key !== null)
+				/; if (text.cstr.eq(node.key, key))
+					return try
+				;/
+			;/
+		;/
+
+		return first_free
+	;/
+
+	/; set (~uint8 key, ~void value)
+		/; if (self._over())
+			self._grow()
+		;/
+
+		uint idx = self._index(key)
+		~MapNode n = ~self._under{idx}
+
+		/; if (n`.active == false)
+			self.count++
+		;; else
+			n`.value = value
+			return
+		;/
+
+		/; if (n`.key !== null)
+			_delete(n`.key)
+		;/
+
+		n`.key = text.cstr.copy(key)
+		n`.value = value
+		n`.active = true
+	;/
+
+	/; get (~uint8 key) [~void]
+		uint idx = self._index(key)
+
+		MapNode n = self._under{idx}
+		
+		/; if (n.key == null || n.active == false)
+			return null
+		;/
+
+		return n.value
+	;/
+
+	/; del (~uint8 key)
+		uint idx = self._index(key)
+		MapNode n = self._under{idx}
+		
+		/; if (n.active == true)
+			return
+		;/
+		
+		n.active = false
+		self._under{idx} = n
+		self.count--
+	;/
+
+	/; end
+		/; loop (int i = 0; i < self.size) [i++]
+			MapNode n = self._under{i}
+			/; if (n.key !== null)
+				_delete(n.key)
+			;/
+		;/
+
+		_delete(self._under)
+		self._under = null
+		self.size = 0
+		self.count = 0
+	;/
+;/
+

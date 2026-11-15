@@ -9,14 +9,14 @@ struct List {
 		_elsz
 }
 
-uint VECTOR_MIN_ELEMENTS = 4
-uint VECTOR_MAX_GROW = 256
+uint LIST_MIN_ELEMENTS = 4
+uint LIST_MAX_GROW = 256
 
-/; method Vector
+/; method List
 	
 	/; init (uint elsz)
 		self._elsz = elsz
-		self.size = VECTOR_MIN_ELEMENTS
+		self.size = LIST_MIN_ELEMENTS
 		self.count = 0
 		self.data = _alloc(self.size * self._elsz)
 	;/
@@ -41,10 +41,10 @@ uint VECTOR_MAX_GROW = 256
 
 	/; push (~void el)
 		/; if (self.size == self.count + 1)
-			/; if (self.size < VECTOR_MAX_GROW)
+			/; if (self.size < LIST_MAX_GROW)
 				self._grow(self.size)
 			;; else
-				self._grow(VECTOR_MAX_GROW)
+				self._grow(LIST_MAX_GROW)
 			;/
 		;/
 
@@ -127,8 +127,8 @@ uint VECTOR_MAX_GROW = 256
 		_delete(self.data)
 	;/
 
-	/; copy [Vector]
-		Vector out
+	/; copy [List]
+		List out
 		
 		out.init(self._elsz)
 		/; loop (int i = 0; i < self.count) [i++]

@@ -4,10 +4,9 @@
 	import "internal/c_wrap_linux.tnsl"
 
 	# Basic modules
-	import "algo/algo.tnsl"
 	import "box/box.tnsl"
+	import "crypto/crypto.tnsl"
 	import "io/io.tnsl"
-	import "lang/lang.tnsl"
 	import "text/text.tnsl"
 ;/
 
