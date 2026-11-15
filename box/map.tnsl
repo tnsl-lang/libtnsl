@@ -58,16 +58,13 @@ uint MAP_MAX_GROW = 4096
 		uint old_size = self.size
 
 		self.count = 0
-		/; if (self.size < MAP_MAX_GROW / 2)
-			self.size = old_size * 2
-		;; else
-			self.size = old_size + MAP_MAX_GROW
-		;/
+		self.size = old_size * 2
 		self._alloc()
 		
 		/; loop (int i = 0; i < old_size) [i++]
 			MapNode to_copy = old_list{i}
 			/; if (to_copy.active)
+				self.count++
 				uint idx = self._index(to_copy.key)
 				self._under{idx} = to_copy
 			;; else if (to_copy.key !== null)
@@ -97,8 +94,8 @@ uint MAP_MAX_GROW = 4096
 		int first_free = -1
 
 		/; loop (int i = 0; i < self.size) [i++]
-			uint try = h + (i + i * i) / 2
-			try = try % self.size
+			uint try = (i + i * i) / 2
+			try = (h + try) % self.size
 
 			MapNode node = self._under{try}
 			
@@ -109,10 +106,8 @@ uint MAP_MAX_GROW = 4096
 				return first_free
 			;; else if (node.deleted() == true && first_free < 0)
 				first_free = try
-			;; else if (node.key !== null)
-				/; if (text.cstr.eq(node.key, key))
-					return try
-				;/
+			;; else if (text.cstr.eq(node.key, key))
+				return try
 			;/
 		;/
 
@@ -157,14 +152,13 @@ uint MAP_MAX_GROW = 4096
 
 	/; del (~uint8 key)
 		uint idx = self._index(key)
-		MapNode n = self._under{idx}
+		~MapNode n = ~self._under{idx}
 		
-		/; if (n.active == true)
+		/; if (n`.active == false)
 			return
 		;/
 		
-		n.active = false
-		self._under{idx} = n
+		n`.active = false
 		self.count--
 	;/
 

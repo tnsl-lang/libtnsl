@@ -2,7 +2,7 @@
 /; module cstr
 
 /; eq (~uint8 a, b) [bool]
-	/; loop (a` == b` && a` !== 0 && b` !== 0) [a++; b++] ;/
+	/; loop (a` == b` && a` !== 0) [a++; b++] ;/
 
 	/; if (b` == 0 && a` == 0)
 		return true
@@ -18,7 +18,7 @@
 ;/
 
 /; copy (~uint8 str) [~uint8]
-	~uint8 out = _alloc(length(str))
+	~uint8 out = _alloc(length(str) + 1)
 	
 	int i = 0
 	/; loop (str{i} !== 0) [out{i} = str{i}; i++] ;/
