@@ -12,6 +12,9 @@ uint8 PATH_SEP = '/'
 		self.strings.init(8)
 
 		~uint8 real = _realpath(path)
+		/; if (real == null)
+			return
+		;/
 
 		box.List tmp
 		tmp.init(1)
@@ -45,13 +48,13 @@ uint8 PATH_SEP = '/'
 			return out.as_cstr()
 		;/
 
-		~uint8 str = self.strings.get(0)
-		out.push_cstr(str)
+		~~uint8 str = self.strings.get(0)
+		out.push_cstr(str`)
 
 		/; loop (int i = 1; i < self.strings.count) [i++]
 			str = self.strings.get(i)
 			out.push(~PATH_SEP)
-			out.push_cstr(str)
+			out.push_cstr(str`)
 		;/
 
 		return out.as_cstr()
@@ -88,6 +91,7 @@ uint8 PATH_SEP = '/'
 		Path out
 		out.init(full)
 
+		return out
 	;/
 
 	/; end

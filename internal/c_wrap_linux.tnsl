@@ -261,9 +261,8 @@ asm "extern malloc, realloc, free, printf, putchar, open, close, read, write, ls
     asm "sub rsp, 128"
 
     # Call libc
-    asm "mov rdi, r10" # handle
+    asm "mov rdi, r10" # path name
     asm "mov rsi, 0"   # resolved_path
-    asm "mov rdx, 1"   # one byte
     asm "call realpath wrt ..plt"
 
     asm "mov r11, rax"

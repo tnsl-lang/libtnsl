@@ -1,5 +1,6 @@
 
 /; module io
 	import "file.tnsl"
+	import "path.tnsl"
 ;/
 
