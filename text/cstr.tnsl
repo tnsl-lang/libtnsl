@@ -1,5 +1,5 @@
 
-/; module cstr
+/; export module cstr
 
 /; eq (~uint8 a, b) [bool]
 	/; loop (a` == b` && a` !== 0) [a++; b++] ;/

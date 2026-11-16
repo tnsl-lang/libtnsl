@@ -1,4 +1,4 @@
 
-/; module lang
+/; export module lang
 ;/
 

@@ -1,5 +1,5 @@
 
-/; module hash
+/; export module hash
 	import "siphash.tnsl"
 ;/
 

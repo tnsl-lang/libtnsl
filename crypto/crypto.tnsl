@@ -1,5 +1,5 @@
 
-/; module crypto
+/; export module crypto
 	import "hash/hash.tnsl"
 ;/
 

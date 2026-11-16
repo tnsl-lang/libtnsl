@@ -1,4 +1,4 @@
 
-/; module algo
+/; export module algo
 ;/
 

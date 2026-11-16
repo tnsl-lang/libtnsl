@@ -1,5 +1,5 @@
 
-/; module text
+/; export module text
 	import "cstr.tnsl"
 ;/
 
